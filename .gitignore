@@ -1,0 +1,15 @@
+# Credenciais do Supabase — NUNCA commitar
+config.js
+
+# Dependências
+node_modules/
+
+# Skills e agentes do Claude Code
+.agent/
+.agents/
+.claude/
+skills-lock.json
+
+# Sistema operacional
+.DS_Store
+Thumbs.db

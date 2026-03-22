@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Áurea</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+<body>
+
+<!-- ── TELA DE LOGIN ──────────────────────────────────────────────────────── -->
+<div id="login-screen" class="login-screen">
+
+  <!-- Painel hero (esquerda) -->
+  <div class="login-hero">
+    <div class="login-hero-bg"></div>
+    <div class="login-hero-top">
+      <img src="assets/images/aurea.png" alt="áurea" class="login-hero-logo">
+    </div>
+    <div class="login-hero-content">
+      <p class="login-hero-tagline">Seus erros<br>financeiros,<br><em>ilustrados.</em></p>
+      <div class="login-hero-divider"></div>
+    </div>
+  </div>
+
+  <!-- Painel direito com o card -->
+  <div class="login-right">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="assets/images/aurea.png" alt="áurea" class="login-logo-img">
+    </div>
+
+    <p class="login-welcome">Bem-vindo<br><strong>de volta.</strong></p>
+    <p class="login-welcome-sub">Acesse sua conta para continuar</p>
+
+    <div id="login-error" class="login-error"></div>
+
+    <div class="login-fields" id="main-login-fields">
+      <div class="login-field">
+        <label for="login-email">E-mail</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label for="login-password">Senha</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+    </div>
+
+    <!-- ── VIEW: Login ──────────────────────────────────────────────────── -->
+    <div id="view-login">
+      <button class="btn btn-primary login-btn" id="login-btn" onclick="doLogin()">
+        <span class="login-btn-text">Entrar</span>
+        <span class="login-btn-spinner" style="display:none">●</span>
+      </button>
+      <button class="login-link" onclick="showView('reset')">Esqueci a senha</button>
+      <div class="login-divider"><span>ou</span></div>
+      <button class="btn btn-secondary login-btn" onclick="showView('register')">
+        Criar conta grátis
+      </button>
+    </div>
+
+    <!-- ── VIEW: Esqueci a senha ─────────────────────────────────────── -->
+    <div id="view-reset" style="display:none">
+      <div class="login-fields" style="margin-bottom:16px">
+        <div class="login-field">
+          <label for="reset-email">E-mail</label>
+          <input type="email" id="reset-email" placeholder="seu@email.com" autocomplete="email">
+        </div>
+      </div>
+      <button class="btn btn-primary login-btn" id="reset-btn" onclick="sendPasswordReset()">
+        <span class="login-btn-text">Enviar link de redefinição</span>
+        <span class="login-btn-spinner" style="display:none">●</span>
+      </button>
+      <button class="login-link" onclick="showView('login')">← Voltar ao login</button>
+    </div>
+
+    <!-- ── VIEW: Link enviado ────────────────────────────────────────── -->
+    <div id="view-reset-sent" style="display:none">
+      <div class="login-sent">
+        <div class="login-sent-icon">✉</div>
+        <p class="login-sent-title">Verifique seu e-mail</p>
+        <p class="login-sent-text">Enviamos um link de redefinição. Clique nele para criar uma nova senha.</p>
+      </div>
+      <button class="login-link" onclick="showView('login')">← Voltar ao login</button>
+    </div>
+
+    <!-- ── VIEW: Nova senha (via link do e-mail) ─────────────────────── -->
+    <div id="view-new-password" style="display:none">
+      <div class="login-fields" style="margin-bottom:16px">
+        <div class="login-field">
+          <label for="new-password">Nova senha</label>
+          <input type="password" id="new-password" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="login-field">
+          <label for="new-password-confirm">Confirmar senha</label>
+          <input type="password" id="new-password-confirm" placeholder="Repita a senha">
+        </div>
+      </div>
+      <button class="btn btn-primary login-btn" id="new-pass-btn" onclick="saveNewPassword()">
+        <span class="login-btn-text">Salvar nova senha</span>
+        <span class="login-btn-spinner" style="display:none">●</span>
+      </button>
+    </div>
+
+    <!-- ── VIEW: Cadastro ───────────────────────────────────────────────── -->
+    <div id="view-register" style="display:none">
+      <div class="login-fields" style="margin-bottom:16px">
+        <div class="login-field-row">
+          <div class="login-field">
+            <label for="register-name">Nome</label>
+            <input type="text" id="register-name" placeholder="João" autocomplete="given-name">
+          </div>
+          <div class="login-field">
+            <label for="register-lastname">Sobrenome</label>
+            <input type="text" id="register-lastname" placeholder="Silva" autocomplete="family-name">
+          </div>
+        </div>
+        <div class="login-field">
+          <label for="register-email">E-mail</label>
+          <input type="email" id="register-email" placeholder="seu@email.com" autocomplete="email">
+        </div>
+        <div class="login-field">
+          <label for="register-password">Senha</label>
+          <input type="password" id="register-password" placeholder="Mínimo 8 caracteres">
+        </div>
+        <div class="login-field">
+          <label for="register-password-confirm">Confirmar senha</label>
+          <input type="password" id="register-password-confirm" placeholder="Repita a senha">
+        </div>
+      </div>
+      <button class="btn btn-primary login-btn" id="register-btn" onclick="doRegister()">
+        <span class="login-btn-text">Criar conta grátis</span>
+        <span class="login-btn-spinner" style="display:none">●</span>
+      </button>
+      <button class="login-link" onclick="showView('login')">← Já tenho conta</button>
+    </div>
+
+    <!-- ── VIEW: Cadastro confirmado ────────────────────────────────────── -->
+    <div id="view-register-sent" style="display:none">
+      <div class="login-sent">
+        <div class="login-sent-icon">✅</div>
+        <p class="login-sent-title">Conta criada!</p>
+        <p class="login-sent-text">Enviamos um e-mail de confirmação. Clique no link para ativar sua conta e começar a usar.</p>
+      </div>
+      <button class="login-link" onclick="showView('login')">← Voltar ao login</button>
+    </div>
+
+    <p class="login-footer" id="login-config-warn" style="display:none">
+      ⚠️ Preencha <code>config.js</code> com as credenciais do Supabase antes de continuar.
+    </p>
+  </div>
+  </div><!-- /login-right -->
+</div>
+
+<div class="bg-orbs" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="app" id="app" style="display:none">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="assets/images/aurea.png" id="sidebar-logo-img" alt="áurea" class="sidebar-logo-img">
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Visões</div>
+      <div class="nav-item active" onclick="showTab('visao',this)">
+        <span class="nav-icon">◈</span> Visão Geral
+      </div>
+      <div class="nav-item" onclick="showTab('dados',this)">
+        <span class="nav-icon">✎</span> Editar Mês
+      </div>
+      <div class="nav-item" onclick="showTab('anual',this)">
+        <span class="nav-icon">◫</span> Resumo Anual
+      </div>
+      <div class="nav-item" onclick="showTab('dicas',this)">
+        <span class="nav-icon">◎</span> Análise & Dicas
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1">
+      <div class="sidebar-section-label">Meses</div>
+      <div class="year-nav">
+        <button class="year-nav-btn" onclick="changeYear(-1)" title="Ano anterior">&#8592;</button>
+        <span class="year-nav-label" id="year-label">2026</span>
+        <button class="year-nav-btn" onclick="changeYear(+1)" title="Próximo ano">&#8594;</button>
+      </div>
+      <div class="month-list" id="month-list"></div>
+    </div>
+
+    <!-- Usuário logado -->
+    <div class="sidebar-user" id="sidebar-user">
+      <div class="sidebar-user-info">
+        <span class="sidebar-user-icon">●</span>
+        <span class="sidebar-user-email" id="user-email">—</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()" title="Sair">↩</button>
+    </div>
+  </aside>
+
+  <!-- ── TOPBAR ────────────────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-title" id="topbar-title">Abr 2026</span>
+      <span class="topbar-sub" id="topbar-sub">Selecione um mês na barra lateral</span>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+        <span class="theme-toggle-track">
+          <span class="theme-toggle-dot"></span>
+        </span>
+        <span class="theme-toggle-icon" id="theme-icon">🌙</span>
+      </button>
+      <span class="topbar-greeting" id="topbar-greeting"></span>
+    </div>
+  </header>
+
+  <!-- ── MAIN ──────────────────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <div id="global-alert"></div>
+
+    <!-- ── VISÃO GERAL ──────────────────────────────────────────────────── -->
+    <div class="panel active" id="panel-visao">
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="card-title">Por categoria</div>
+          <p class="card-sub">Distribuição das despesas</p>
+          <div id="donut-legend" class="legend"></div>
+          <div style="position:relative;height:200px">
+            <canvas id="donutChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="card-title">Renda vs Despesas</div>
+          <p class="card-sub">Todos os meses · barra destacada = mês atual</p>
+          <div style="position:relative;height:240px">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Detalhamento de despesas</span>
+          <span class="section-tag" id="breakdown-label">—</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Categoria</th><th>Total</th><th>Proporção</th></tr></thead>
+            <tbody id="breakdown-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── EDITAR MÊS ───────────────────────────────────────────────────── -->
+    <div class="panel" id="panel-dados">
+      <div class="edit-toolbar">
+        <span class="edit-toolbar-title" id="edit-month-title">—</span>
+        <span id="edit-month-tag"></span>
+        <div class="edit-toolbar-right">
+          <button class="btn btn-ghost" id="copy-prev-btn" onclick="copyFromPrev()">← Copiar mês anterior</button>
+          <button class="btn btn-danger" onclick="clearMonth()">Limpar mês</button>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header"><span class="section-title">↓ Entradas de renda</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fonte</th><th>Valor (R$)</th><th>Observação</th><th style="width:40px"></th></tr></thead>
+            <tbody id="income-rows"></tbody>
+            <tfoot><tr><td>Total renda</td><td id="income-total" class="text-green">—</td><td></td><td></td></tr></tfoot>
+          </table>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn-add" onclick="addIncome()">+ Adicionar fonte de renda</button>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header"><span class="section-title">↑ Despesas</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Descrição</th><th>Categoria</th><th>Valor (R$)</th><th>Método</th><th style="width:40px"></th></tr></thead>
+            <tbody id="expense-rows"></tbody>
+            <tfoot><tr><td>Total despesas</td><td></td><td id="expense-total" class="text-red">—</td><td></td><td></td></tr></tfoot>
+          </table>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn-add" onclick="addExpense()">+ Adicionar despesa</button>
+        </div>
+      </div>
+      <div class="storage-footer">
+        <button class="btn btn-primary" id="save-btn" onclick="saveData()">Salvar dados</button>
+        <button class="btn btn-ghost" onclick="exportJSON()">↓ Exportar backup</button>
+        <button class="btn btn-ghost" onclick="importJSON()">↑ Importar backup</button>
+        <span class="storage-info" id="storage-info"></span>
+      </div>
+    </div>
+
+    <!-- ── RESUMO ANUAL ─────────────────────────────────────────────────── -->
+    <div class="panel" id="panel-anual">
+      <div class="kpi-grid" id="annual-kpi"></div>
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title" id="annual-section-title">Mês a mês · 2026</span>
+          <span class="section-tag">Jan → Dez</span>
+        </div>
+        <div class="annual-wrap">
+          <table id="annual-table"></table>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header"><span class="section-title">Evolução do saldo acumulado</span></div>
+        <div style="position:relative;height:220px">
+          <canvas id="saldoChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ANÁLISE & DICAS ──────────────────────────────────────────────── -->
+    <div class="panel" id="panel-dicas">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Análise financeira</span>
+          <span class="section-tag" id="analysis-month-label">—</span>
+        </div>
+        <div id="analysis-content"></div>
+      </div>
+      <div class="section">
+        <div class="section-header"><span class="section-title">Recomendações</span></div>
+        <div class="tips-grid" id="tips-content"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

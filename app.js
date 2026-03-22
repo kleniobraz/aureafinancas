@@ -322,7 +322,6 @@ async function onAuthSuccess() {
 
   if (Object.keys(allData).length === 0) seedApril();
 
-  hideLoginScreen();
   renderAll();
 }
 

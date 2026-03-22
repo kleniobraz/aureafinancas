@@ -1325,6 +1325,40 @@ body.light .sidebar-toggle-icon { background: var(--text-2); }
 }
 .login-link:hover { color: var(--accent-l); }
 
+.login-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+}
+.login-consent input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.login-consent label {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-2);
+  line-height: 1.6;
+  cursor: pointer;
+}
+.login-consent label a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.login-consent label a:hover {
+  color: var(--accent-l);
+  text-decoration: underline;
+}
+
 /* Footer / aviso config */
 .login-footer {
   margin-top: 20px; text-align: center;

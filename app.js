@@ -127,32 +127,15 @@ const clone = o => JSON.parse(JSON.stringify(o));
 const escHtml = s => String(s ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 // ═══ AUTH ═════════════════════════════════════════════════════════════════════
-function showLoginScreen() {
-  const screen = document.getElementById('login-screen');
-  screen.style.display = 'flex';
-  screen.style.opacity  = '1';
-  document.getElementById('app').style.display = 'none';
-  if (HAS_GSAP()) gsap.fromTo('#login-screen .login-card', { opacity: 0, y: 24, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: 'power3.out' });
+const ON_LOGIN_PAGE     = !!document.getElementById('login-screen');
+const ON_DASHBOARD_PAGE = !!document.getElementById('app');
 
-  // Warn if credentials not filled in
-  const warn = document.getElementById('login-config-warn');
-  if (SUPABASE_URL.includes('COLE_') || SUPABASE_ANON_KEY.includes('COLE_')) {
-    warn.style.display = 'block';
-    document.getElementById('login-btn').disabled = true;
-  }
+function showLoginScreen() {
+  window.location.replace('login.html');
 }
 
 function hideLoginScreen() {
-  const screen = document.getElementById('login-screen');
-  const app    = document.getElementById('app');
-  if (HAS_GSAP()) {
-    gsap.to(screen, { opacity: 0, duration: 0.3, onComplete: () => { screen.style.display = 'none'; } });
-    app.style.display = 'grid';
-    gsap.fromTo(app, { opacity: 0 }, { opacity: 1, duration: 0.4, delay: 0.15 });
-  } else {
-    screen.style.display = 'none';
-    app.style.display = 'grid';
-  }
+  window.location.replace('dashboard.html');
 }
 
 function setLoginLoading(on) { _setBtnLoading('login-btn', on); }
@@ -225,10 +208,13 @@ async function doRegister() {
 
   document.getElementById('login-error').style.display = 'none';
 
+  const consent = document.getElementById('register-consent');
+
   if (!firstName)          { showLoginError('Digite seu nome.'); return; }
   if (!email)              { showLoginError('Digite seu e-mail.'); return; }
   if (pass.length < 8)     { showLoginError('A senha deve ter pelo menos 8 caracteres.'); return; }
   if (pass !== conf)        { showLoginError('As senhas não coincidem.'); return; }
+  if (!consent.checked)    { showLoginError('Aceite a política de privacidade para continuar.'); return; }
 
   _setBtnLoading('register-btn', true);
   const { error } = await sb.auth.signUp({
@@ -255,7 +241,7 @@ async function sendPasswordReset() {
 
   _setBtnLoading('reset-btn', true);
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.href,
+    redirectTo: window.location.origin + '/login.html',
   });
   _setBtnLoading('reset-btn', false);
 
@@ -294,12 +280,15 @@ async function doLogout() {
   await sb.auth.signOut();
   allData = {};
   _sidebarAnimDone = false;
-  document.getElementById('login-email').value    = '';
-  document.getElementById('login-password').value = '';
-  showLoginScreen();
+  window.location.replace('login.html');
 }
 
 async function onAuthSuccess() {
+  if (ON_LOGIN_PAGE) {
+    window.location.replace('dashboard.html');
+    return;
+  }
+
   const { data: { user } } = await sb.auth.getUser();
   if (user) {
     const emailEl = document.getElementById('user-email');
@@ -839,35 +828,49 @@ function _swapLogo(isLight) {
 // ═══ RENDER ALL & INIT ════════════════════════════════════════════════════════
 function renderAll() { renderSidebar(); renderVisao(); updateStorageInfo(); }
 
-// Enter key — ativa o botão primário da view atual
-document.addEventListener('keydown', e => {
-  if (e.key !== 'Enter') return;
-  if (document.getElementById('login-screen').style.display === 'none') return;
-  if (document.getElementById('view-reset').style.display        !== 'none') { sendPasswordReset(); return; }
-  if (document.getElementById('view-new-password').style.display !== 'none') { saveNewPassword();   return; }
-  if (document.getElementById('view-login').style.display        !== 'none') { doLogin();           return; }
-});
+// Enter key — ativa o botão primário da view atual (só na página de login)
+if (ON_LOGIN_PAGE) {
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    if (document.getElementById('view-reset').style.display        !== 'none') { sendPasswordReset(); return; }
+    if (document.getElementById('view-new-password').style.display !== 'none') { saveNewPassword();   return; }
+    if (document.getElementById('view-login').style.display        !== 'none') { doLogin();           return; }
+  });
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   document.addEventListener('click', handleRipple);
 
-  // Check if there's an active session (e.g. page refresh)
   const { data: { session: activeSession } } = await sb.auth.getSession();
-  if (activeSession) {
-    await onAuthSuccess();
-  } else {
-    showLoginScreen();
-  }
 
-  // Listen for auth state changes
-  sb.auth.onAuthStateChange((event) => {
-    if (event === 'PASSWORD_RECOVERY') {
-      // User clicked the reset link — show new password form
-      showLoginScreen();
-      showView('new-password');
-    } else if (event === 'SIGNED_OUT') {
-      showLoginScreen();
+  if (ON_LOGIN_PAGE) {
+    // Se já logado, vai direto pro dashboard
+    if (activeSession) {
+      window.location.replace('dashboard.html');
+      return;
     }
-  });
+    // Mostra card de login com animação
+    if (HAS_GSAP()) gsap.fromTo('.login-card', { opacity: 0, y: 24, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: 'power3.out' });
+    // Warn se credenciais não preenchidas
+    if (SUPABASE_URL.includes('COLE_') || SUPABASE_ANON_KEY.includes('COLE_')) {
+      document.getElementById('login-config-warn').style.display = 'block';
+      document.getElementById('login-btn').disabled = true;
+    }
+    // Detecta link de recuperação de senha
+    sb.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') showView('new-password');
+    });
+
+  } else if (ON_DASHBOARD_PAGE) {
+    // Se não logado, redireciona pro login
+    if (!activeSession) {
+      window.location.replace('login.html');
+      return;
+    }
+    await onAuthSuccess();
+    sb.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') window.location.replace('login.html');
+    });
+  }
 });

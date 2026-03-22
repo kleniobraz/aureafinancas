@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Áurea · Dashboard</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="assets/images/aurea.png" id="sidebar-logo-img" alt="áurea" class="sidebar-logo-img">
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Visões</div>
+      <div class="nav-item active" onclick="showTab('visao',this)">
+        <span class="nav-icon">◈</span> Visão Geral
+      </div>
+      <div class="nav-item" onclick="showTab('dados',this)">
+        <span class="nav-icon">✎</span> Editar Mês
+      </div>
+      <div class="nav-item" onclick="showTab('anual',this)">
+        <span class="nav-icon">◫</span> Resumo Anual
+      </div>
+      <div class="nav-item" onclick="showTab('dicas',this)">
+        <span class="nav-icon">◎</span> Análise & Dicas
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1">
+      <div class="sidebar-section-label">Meses</div>
+      <div class="year-nav">
+        <button class="year-nav-btn" onclick="changeYear(-1)" title="Ano anterior">&#8592;</button>
+        <span class="year-nav-label" id="year-label">2026</span>
+        <button class="year-nav-btn" onclick="changeYear(+1)" title="Próximo ano">&#8594;</button>
+      </div>
+      <div class="month-list" id="month-list"></div>
+    </div>
+
+    <!-- Usuário logado -->
+    <div class="sidebar-user" id="sidebar-user">
+      <div class="sidebar-user-info">
+        <span class="sidebar-user-icon">●</span>
+        <span class="sidebar-user-email" id="user-email">—</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()" title="Sair">↩</button>
+    </div>
+  </aside>
+
+  <!-- ── OVERLAY (mobile drawer) ──────────────────────────────────────────── -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- ── TOPBAR ────────────────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menu">
+        <span class="sidebar-toggle-icon"></span>
+        <span class="sidebar-toggle-icon"></span>
+        <span class="sidebar-toggle-icon"></span>
+      </button>
+      <span class="topbar-title" id="topbar-title">Abr 2026</span>
+      <span class="topbar-sub" id="topbar-sub">Selecione um mês na barra lateral</span>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+        <span class="theme-toggle-track">
+          <span class="theme-toggle-dot"></span>
+        </span>
+        <span class="theme-toggle-icon" id="theme-icon">🌙</span>
+      </button>
+      <span class="topbar-greeting" id="topbar-greeting"></span>
+    </div>
+  </header>
+
+  <!-- ── MAIN ──────────────────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <div id="global-alert"></div>
+
+    <!-- ── VISÃO GERAL ──────────────────────────────────────────────────── -->
+    <div class="panel active" id="panel-visao">
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="card-title">Por categoria</div>
+          <p class="card-sub">Distribuição das despesas</p>
+          <div id="donut-legend" class="legend"></div>
+          <div style="position:relative;height:200px">
+            <canvas id="donutChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="card-title">Renda vs Despesas</div>
+          <p class="card-sub">Todos os meses · barra destacada = mês atual</p>
+          <div style="position:relative;height:240px">
+            <canvas id="barChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Detalhamento de despesas</span>
+          <span class="section-tag" id="breakdown-label">—</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Categoria</th><th>Total</th><th>Proporção</th></tr></thead>
+            <tbody id="breakdown-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── EDITAR MÊS ───────────────────────────────────────────────────── -->
+    <div class="panel" id="panel-dados">
+      <div class="edit-toolbar">
+        <span class="edit-toolbar-title" id="edit-month-title">—</span>
+        <span id="edit-month-tag"></span>
+        <div class="edit-toolbar-right">
+          <button class="btn btn-ghost" id="copy-prev-btn" onclick="copyFromPrev()">← Copiar mês anterior</button>
+          <button class="btn btn-danger" onclick="clearMonth()">Limpar mês</button>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header"><span class="section-title">↓ Entradas de renda</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fonte</th><th>Valor (R$)</th><th>Observação</th><th style="width:40px"></th></tr></thead>
+            <tbody id="income-rows"></tbody>
+            <tfoot><tr><td>Total renda</td><td id="income-total" class="text-green">—</td><td></td><td></td></tr></tfoot>
+          </table>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn-add" onclick="addIncome()">+ Adicionar fonte de renda</button>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header"><span class="section-title">↑ Despesas</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Descrição</th><th>Categoria</th><th>Valor (R$)</th><th>Método</th><th style="width:40px"></th></tr></thead>
+            <tbody id="expense-rows"></tbody>
+            <tfoot><tr><td>Total despesas</td><td></td><td id="expense-total" class="text-red">—</td><td></td><td></td></tr></tfoot>
+          </table>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn-add" onclick="addExpense()">+ Adicionar despesa</button>
+        </div>
+      </div>
+      <div class="storage-footer">
+        <button class="btn btn-primary" id="save-btn" onclick="saveData()">Salvar dados</button>
+        <button class="btn btn-ghost" onclick="exportJSON()">↓ Exportar backup</button>
+        <button class="btn btn-ghost" onclick="importJSON()">↑ Importar backup</button>
+        <span class="storage-info" id="storage-info"></span>
+      </div>
+    </div>
+
+    <!-- ── RESUMO ANUAL ─────────────────────────────────────────────────── -->
+    <div class="panel" id="panel-anual">
+      <div class="kpi-grid" id="annual-kpi"></div>
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title" id="annual-section-title">Mês a mês · 2026</span>
+          <span class="section-tag">Jan → Dez</span>
+        </div>
+        <div class="annual-wrap">
+          <table id="annual-table"></table>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-header"><span class="section-title">Evolução do saldo acumulado</span></div>
+        <div style="position:relative;height:220px">
+          <canvas id="saldoChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ANÁLISE & DICAS ──────────────────────────────────────────────── -->
+    <div class="panel" id="panel-dicas">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">Análise financeira</span>
+          <span class="section-tag" id="analysis-month-label">—</span>
+        </div>
+        <div id="analysis-content"></div>
+      </div>
+      <div class="section">
+        <div class="section-header"><span class="section-title">Recomendações</span></div>
+        <div class="tips-grid" id="tips-content"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ── BOTTOM NAV (mobile only) ──────────────────────────────────────────── -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="bnav-item active" data-tab="visao" onclick="showTab('visao',this)">
+      <span class="bnav-icon">◈</span>
+      <span class="bnav-label">Visão</span>
+    </button>
+    <button class="bnav-item" data-tab="dados" onclick="showTab('dados',this)">
+      <span class="bnav-icon">✎</span>
+      <span class="bnav-label">Editar</span>
+    </button>
+    <button class="bnav-item" data-tab="anual" onclick="showTab('anual',this)">
+      <span class="bnav-icon">◫</span>
+      <span class="bnav-label">Anual</span>
+    </button>
+    <button class="bnav-item" data-tab="dicas" onclick="showTab('dicas',this)">
+      <span class="bnav-icon">◎</span>
+      <span class="bnav-label">Análise</span>
+    </button>
+  </nav>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

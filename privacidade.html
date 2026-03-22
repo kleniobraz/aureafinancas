@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Política de Privacidade — Áurea</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #0B0B09;
+      --bg-2:   #131310;
+      --bg-3:   #1C1B17;
+      --border: #2C2B24;
+      --gold:   #C4922A;
+      --gold-l: #E0B355;
+      --cream:  #EDE8D8;
+      --muted:  #A8998A;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.75;
+    }
+
+    .page {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 80px 32px 120px;
+    }
+
+    /* Nav mínima */
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 400;
+      margin-bottom: 56px;
+      transition: color 0.2s;
+    }
+    .back:hover { color: var(--cream); }
+
+    /* Header */
+    .doc-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+    .doc-title {
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+      color: var(--cream);
+      margin-bottom: 16px;
+    }
+    .doc-meta {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 56px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Conteúdo */
+    h2 {
+      font-family: 'Sora', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      color: var(--cream);
+      margin-top: 48px;
+      margin-bottom: 16px;
+    }
+    p {
+      font-size: 15px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    p strong {
+      color: var(--cream);
+      font-weight: 500;
+    }
+    ul {
+      list-style: none;
+      margin-bottom: 16px;
+    }
+    ul li {
+      font-size: 15px;
+      color: var(--muted);
+      padding: 6px 0 6px 20px;
+      position: relative;
+    }
+    ul li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: var(--gold-l);
+      font-size: 12px;
+    }
+
+    /* Destaques */
+    .highlight {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--gold);
+      border-radius: 0 8px 8px 0;
+      padding: 18px 20px;
+      margin: 24px 0;
+    }
+    .highlight p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--cream);
+    }
+
+    /* Contato */
+    .contact-box {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      margin-top: 48px;
+    }
+    .contact-box p { margin-bottom: 8px; }
+    .contact-box p:last-child { margin-bottom: 0; }
+    a { color: var(--gold); text-decoration: none; }
+    a:hover { color: var(--gold-l); text-decoration: underline; }
+
+    /* Footer mínimo */
+    .doc-footer {
+      margin-top: 72px;
+      padding-top: 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .doc-footer-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <a href="landing.html" class="back">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+      <path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Voltar
+  </a>
+
+  <div class="doc-eyebrow">Documento legal</div>
+  <h1 class="doc-title">Política de Privacidade</h1>
+  <div class="doc-meta">Última atualização: março de 2026 · Versão beta</div>
+
+  <div class="highlight">
+    <p>Resumo direto: coletamos apenas o necessário para o app funcionar. Não vendemos dados. Não usamos publicidade. Você tem controle total sobre suas informações.</p>
+  </div>
+
+  <h2>1. Quem somos</h2>
+  <p>Áurea é um aplicativo de planejamento financeiro pessoal, atualmente em fase beta. O app está sendo desenvolvido para ajudar pessoas a terem mais clareza sobre suas finanças.</p>
+
+  <h2>2. Quais dados coletamos</h2>
+  <p>Coletamos apenas os dados que você fornece voluntariamente ao usar o app:</p>
+  <ul>
+    <li><strong>Dados de conta:</strong> nome e endereço de e-mail, fornecidos no cadastro</li>
+    <li><strong>Dados financeiros:</strong> receitas, despesas e categorias que você registra no app</li>
+    <li><strong>Dados técnicos:</strong> logs básicos de acesso para diagnóstico de erros (sem rastreamento de comportamento)</li>
+  </ul>
+  <p><strong>Não coletamos</strong> dados de localização, informações de pagamento, acesso à câmera ou microfone, ou qualquer dado sensível além dos listados acima.</p>
+
+  <h2>3. Como usamos seus dados</h2>
+  <p>Seus dados são usados exclusivamente para:</p>
+  <ul>
+    <li>Autenticar seu acesso ao app</li>
+    <li>Armazenar e exibir suas informações financeiras</li>
+    <li>Melhorar as funcionalidades do app com base no uso agregado e anônimo</li>
+  </ul>
+
+  <h2>4. Com quem compartilhamos</h2>
+  <p>Seus dados são processados pelo <strong>Supabase</strong>, nossa infraestrutura de banco de dados, certificada com SOC 2 Type II e ISO 27001. Nenhum outro terceiro tem acesso aos seus dados pessoais.</p>
+  <p><strong>Não vendemos, alugamos ou cedemos seus dados a terceiros, jamais.</strong></p>
+
+  <h2>5. Por quanto tempo armazenamos</h2>
+  <p>Seus dados ficam armazenados enquanto sua conta estiver ativa. Ao solicitar a exclusão da conta, todos os seus dados são removidos permanentemente em até 30 dias.</p>
+
+  <h2>6. Seus direitos (LGPD)</h2>
+  <p>Nos termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018), você tem direito a:</p>
+  <ul>
+    <li>Confirmar a existência de tratamento dos seus dados</li>
+    <li>Acessar seus dados</li>
+    <li>Corrigir dados incompletos, inexatos ou desatualizados</li>
+    <li>Solicitar a exclusão dos seus dados</li>
+    <li>Revogar o consentimento dado</li>
+    <li>Portabilidade dos dados para outro serviço</li>
+  </ul>
+  <p>Para exercer qualquer desses direitos, entre em contato pelo e-mail abaixo. Respondemos em até 15 dias úteis.</p>
+
+  <h2>7. Segurança</h2>
+  <p>Adotamos medidas técnicas para proteger seus dados:</p>
+  <ul>
+    <li>Comunicação criptografada via HTTPS/TLS</li>
+    <li>Dados armazenados em servidores com criptografia em repouso</li>
+    <li>Autenticação protegida: senhas nunca são armazenadas em texto simples</li>
+    <li>Infraestrutura certificada SOC 2 Type II (Supabase)</li>
+  </ul>
+
+  <h2>8. Fase beta</h2>
+  <p>O Áurea está em fase de testes. Isso significa que o app é <strong>gratuito</strong> enquanto validamos funcionalidades com usuários reais. A gratuidade não implica qualquer uso dos seus dados como contrapartida. Seus dados são seus, não nosso produto.</p>
+  <p>Quando o app passar para a versão paga, você será avisado com antecedência e poderá decidir como proceder.</p>
+
+  <h2>9. Alterações nesta política</h2>
+  <p>Caso esta política seja atualizada de forma relevante, você será notificado por e-mail ou por aviso no app antes das mudanças entrarem em vigor.</p>
+
+  <div class="contact-box">
+    <p><strong>Dúvidas ou solicitações?</strong></p>
+    <p>Entre em contato pelo e-mail <a href="mailto:kleniosilvac@gmail.com">kleniosilvac@gmail.com</a></p>
+    <p style="margin-top:8px;font-size:13px">Respondemos a todas as solicitações relacionadas à LGPD em até 15 dias úteis.</p>
+  </div>
+
+  <div class="doc-footer">
+    <img src="assets/images/aurea.png" alt="Áurea" style="height:20px;width:auto">
+    <span class="doc-footer-text">© 2026 Áurea · <a href="landing.html">Voltar ao site</a></span>
+  </div>
+
+</div>
+</body>
+</html>

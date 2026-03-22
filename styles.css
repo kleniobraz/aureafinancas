@@ -740,15 +740,207 @@ option { background: var(--bg-3); color: var(--text); }
 .analysis-kpi .val   { font-family: var(--serif); font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
 .analysis-kpi .status{ font-size: 11px; margin-top: 4px; font-weight: 300; }
 
-/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
-@media (max-width: 860px) {
-  .app { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr; }
-  .sidebar { grid-row: auto; height: auto; position: relative; }
-  .topbar  { grid-column: 1; }
-  .main    { grid-column: 1; padding: 18px; }
-  .charts-row { grid-template-columns: 1fr; }
-  .kpi-grid   { grid-template-columns: 1fr 1fr; }
+/* ── SIDEBAR TOGGLE & OVERLAY — always defined, hidden on desktop ─────────── */
+.sidebar-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 38px; height: 38px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  padding: 9px 10px;
+  flex-shrink: 0;
+  transition: background 0.18s, border-color 0.18s;
 }
+.sidebar-toggle:hover { background: rgba(196,146,42,0.07); border-color: var(--accent-2); }
+.sidebar-toggle-icon {
+  display: block;
+  width: 100%; height: 1.5px;
+  background: var(--text-2);
+  border-radius: 2px;
+  transition: background 0.18s;
+}
+.sidebar-toggle:hover .sidebar-toggle-icon { background: var(--accent-l); }
+
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 199;
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.2s ease;
+}
+
+.bottom-nav { display: none; }
+
+/* ── RESPONSIVE — MOBILE ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* ── App grid ── */
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 56px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar → slide-in drawer ── */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 280px;
+    z-index: 200;
+    height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s ease;
+    grid-row: auto;
+    overflow-y: auto;
+  }
+  .app.sidebar-open .sidebar {
+    transform: translateX(0);
+    box-shadow: 8px 0 48px rgba(0,0,0,0.5);
+  }
+  .app.sidebar-open .sidebar-overlay { display: block; }
+
+  /* ── Topbar ── */
+  .topbar {
+    grid-column: 1;
+    height: 56px;
+    padding: 0 14px;
+    z-index: 100;
+  }
+  .topbar-left { gap: 10px; }
+  .topbar-title { font-size: 15px; }
+  .topbar-sub { display: none; }
+  .topbar-greeting { display: none; }
+  .sidebar-toggle { display: flex; }
+
+  /* ── Main ── */
+  .main {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 16px 14px 84px;
+    min-height: 0;
+  }
+
+  /* ── KPI cards — 2 colunas compactas ── */
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .kpi { padding: 16px 14px 14px; }
+  .kpi-value { font-size: 20px; }
+  .kpi-label { font-size: 10px; margin-bottom: 8px; }
+  .kpi-sub { font-size: 11px; }
+
+  /* ── Charts ── */
+  .charts-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .chart-card { padding: 16px; }
+
+  /* ── Tables ── */
+  .table-wrap { -webkit-overflow-scrolling: touch; }
+  table { font-size: 12px; }
+  thead th { padding: 0 10px 10px; font-size: 10px; }
+  tbody td { padding: 10px; }
+  tfoot td { padding: 10px; font-size: 12px; }
+
+  /* ── Section ── */
+  .section { padding: 16px 14px; margin-bottom: 10px; }
+  .section-header { margin-bottom: 14px; }
+
+  /* ── Edit tab ── */
+  .edit-toolbar {
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    gap: 8px;
+  }
+  .edit-toolbar-right {
+    width: 100%;
+    margin-left: 0;
+    flex-direction: row;
+    gap: 6px;
+  }
+  .edit-toolbar-right .btn { font-size: 11px; padding: 7px 12px; flex: 1; justify-content: center; }
+
+  /* ── Storage footer ── */
+  .storage-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  .storage-footer .btn { justify-content: center; }
+  .storage-info { margin-left: 0; text-align: center; }
+
+  /* ── Analysis KPIs ── */
+  .analysis-kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .analysis-kpi { padding: 12px 14px; }
+  .analysis-kpi .val { font-size: 18px; }
+
+  /* ── Tips ── */
+  .tips-grid { grid-template-columns: 1fr; gap: 10px; }
+
+  /* ── Annual ── */
+  .annual-wrap { font-size: 12px; }
+
+  /* ── Bottom nav ── */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--bg-2);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  .bnav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-3);
+    font-family: var(--font);
+    padding: 6px 4px;
+    position: relative;
+    transition: color 0.18s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bnav-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20%; right: 20%;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 0 0 3px 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .bnav-item.active { color: var(--accent-l); }
+  .bnav-item.active::before { opacity: 1; }
+  .bnav-icon { font-size: 17px; line-height: 1; }
+  .bnav-label { font-size: 10px; font-weight: 400; letter-spacing: 0.03em; }
+}
+
+/* ── Light mode — mobile nav ── */
+body.light .bottom-nav { background: rgba(245,237,214,0.96); border-top-color: var(--border); }
+body.light .bnav-item.active { color: var(--accent); }
+body.light .sidebar-toggle-icon { background: var(--text-2); }
 
 /* ═══ ANIMATIONS ════════════════════════════════════════════════════════════ */
 

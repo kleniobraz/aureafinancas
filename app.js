@@ -465,6 +465,7 @@ function selectMonth(mi) {
     else if (id === 'dados') renderEditTab();
     else if (id === 'dicas') renderAnalysis();
   }
+  closeSidebar();
 }
 
 function changeYear(delta) {
@@ -771,16 +772,33 @@ function showTab(id, el) {
   function doSwitch() {
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.querySelectorAll('.bnav-item').forEach(n=>n.classList.remove('active'));
     const panel = document.getElementById('panel-'+id);
-    panel.classList.add('active'); el.classList.add('active');
+    panel.classList.add('active');
+    el.classList.add('active');
+    // Sincroniza sidebar nav e bottom nav
+    const sideNav = document.querySelector(`.nav-item[onclick*="'${id}'"]`);
+    if (sideNav) sideNav.classList.add('active');
+    const bNav = document.querySelector(`.bnav-item[data-tab="${id}"]`);
+    if (bNav) bNav.classList.add('active');
     if (id==='anual') renderAnual();
     else if (id==='dicas') renderAnalysis();
     else if (id==='dados') renderEditTab();
     else renderVisao();
     animPanel(panel);
+    closeSidebar();
   }
   if (prev && HAS_GSAP()) gsap.to(prev,{opacity:0,duration:0.15,ease:'power1.in',onComplete:doSwitch});
   else doSwitch();
+}
+
+// ═══ MOBILE DRAWER ════════════════════════════════════════════════════════════
+function toggleSidebar() {
+  const app = document.getElementById('app');
+  app.classList.toggle('sidebar-open');
+}
+function closeSidebar() {
+  document.getElementById('app').classList.remove('sidebar-open');
 }
 
 // ═══ TEMA ═════════════════════════════════════════════════════════════════════

@@ -204,9 +204,17 @@
     </div>
   </aside>
 
+  <!-- ── OVERLAY (mobile drawer) ──────────────────────────────────────────── -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
   <!-- ── TOPBAR ────────────────────────────────────────────────────────────── -->
   <header class="topbar">
     <div class="topbar-left">
+      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menu">
+        <span class="sidebar-toggle-icon"></span>
+        <span class="sidebar-toggle-icon"></span>
+        <span class="sidebar-toggle-icon"></span>
+      </button>
       <span class="topbar-title" id="topbar-title">Abr 2026</span>
       <span class="topbar-sub" id="topbar-sub">Selecione um mês na barra lateral</span>
     </div>
@@ -340,6 +348,27 @@
     </div>
 
   </main>
+
+  <!-- ── BOTTOM NAV (mobile only) ──────────────────────────────────────────── -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="bnav-item active" data-tab="visao" onclick="showTab('visao',this)">
+      <span class="bnav-icon">◈</span>
+      <span class="bnav-label">Visão</span>
+    </button>
+    <button class="bnav-item" data-tab="dados" onclick="showTab('dados',this)">
+      <span class="bnav-icon">✎</span>
+      <span class="bnav-label">Editar</span>
+    </button>
+    <button class="bnav-item" data-tab="anual" onclick="showTab('anual',this)">
+      <span class="bnav-icon">◫</span>
+      <span class="bnav-label">Anual</span>
+    </button>
+    <button class="bnav-item" data-tab="dicas" onclick="showTab('dicas',this)">
+      <span class="bnav-icon">◎</span>
+      <span class="bnav-label">Análise</span>
+    </button>
+  </nav>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

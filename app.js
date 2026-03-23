@@ -284,6 +284,77 @@ async function doLogout() {
   window.location.replace('login.html');
 }
 
+// ═══ PERFIL ════════════════════════════════════════════════════════════════════
+function _getInitials(name) {
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+}
+
+function _applyDisplayName(name) {
+  const initials = _getInitials(name);
+  const sidebarAvatar  = document.getElementById('sidebar-avatar');
+  const sidebarName    = document.getElementById('sidebar-display-name');
+  const profileAvatarLg = document.getElementById('profile-avatar-lg');
+  const profileName    = document.getElementById('profile-identity-name');
+  const greetingEl     = document.getElementById('topbar-greeting');
+  if (sidebarAvatar)  sidebarAvatar.textContent  = initials;
+  if (sidebarName)    sidebarName.textContent     = name;
+  if (profileAvatarLg) profileAvatarLg.textContent = initials;
+  if (profileName)    profileName.textContent     = name;
+  if (greetingEl)     greetingEl.innerHTML = `Olá, <strong>${name}</strong>!`;
+}
+
+async function openProfileModal() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  const saved = user.user_metadata?.display_name;
+  const fallback = user.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const name = saved || fallback;
+  document.getElementById('display-name-input').value = saved || '';
+  document.getElementById('profile-identity-email').textContent = user.email;
+  document.getElementById('profile-new-password').value = '';
+  document.getElementById('profile-confirm-password').value = '';
+  _applyDisplayName(name);
+  document.getElementById('profile-backdrop').classList.add('open');
+  document.getElementById('profile-modal').classList.add('open');
+}
+
+function closeProfileModal() {
+  document.getElementById('profile-backdrop').classList.remove('open');
+  document.getElementById('profile-modal').classList.remove('open');
+}
+
+async function saveDisplayName() {
+  const name = document.getElementById('display-name-input').value.trim();
+  if (!name) { showAlert('Digite um nome.', 'warning'); return; }
+  const { error } = await sb.auth.updateUser({ data: { display_name: name } });
+  if (error) { showAlert('Erro ao salvar nome.', 'danger'); return; }
+  _applyDisplayName(name);
+  showAlert('Nome atualizado!', 'success');
+}
+
+async function changePassword() {
+  const pwd  = document.getElementById('profile-new-password').value;
+  const conf = document.getElementById('profile-confirm-password').value;
+  if (!pwd || pwd.length < 6) { showAlert('A senha precisa ter pelo menos 6 caracteres.', 'warning'); return; }
+  if (pwd !== conf)           { showAlert('As senhas não coincidem.', 'warning'); return; }
+  const { error } = await sb.auth.updateUser({ password: pwd });
+  if (error) { showAlert('Erro ao alterar senha.', 'danger'); return; }
+  document.getElementById('profile-new-password').value = '';
+  document.getElementById('profile-confirm-password').value = '';
+  showAlert('Senha alterada com sucesso!', 'success');
+}
+
+async function deleteAccount() {
+  const confirmed = confirm('Tem certeza? Todos os seus dados serão removidos permanentemente. Esta ação não pode ser desfeita.');
+  if (!confirmed) return;
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+  await sb.from('months_data').delete().neq('year', 0);
+  await sb.auth.signOut();
+  localStorage.clear();
+  window.location.replace('landing.html');
+}
+
 async function onAuthSuccess() {
   if (ON_LOGIN_PAGE) {
     window.location.replace('dashboard.html');
@@ -295,10 +366,9 @@ async function onAuthSuccess() {
     const emailEl = document.getElementById('user-email');
     if (emailEl) emailEl.textContent = user.email;
 
-    const displayName = user.user_metadata?.first_name
-      || user.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const greetingEl = document.getElementById('topbar-greeting');
-    if (greetingEl) greetingEl.innerHTML = `Olá, <strong>${displayName}</strong>!`;
+    const saved = user.user_metadata?.display_name;
+    const fallback = user.email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    _applyDisplayName(saved || fallback);
   }
 
   await dbLoad();
@@ -898,13 +968,24 @@ function showTab(id, el) {
   else doSwitch();
 }
 
-// ═══ MOBILE DRAWER ════════════════════════════════════════════════════════════
+// ═══ SIDEBAR TOGGLE ════════════════════════════════════════════════════════════
 function toggleSidebar() {
   const app = document.getElementById('app');
-  app.classList.toggle('sidebar-open');
+  const isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    app.classList.toggle('sidebar-open');
+  } else {
+    const collapsed = app.classList.toggle('sidebar-collapsed');
+    localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '0');
+  }
 }
 function closeSidebar() {
   document.getElementById('app').classList.remove('sidebar-open');
+}
+function initSidebarState() {
+  if (window.innerWidth > 768 && localStorage.getItem('sidebar-collapsed') === '1') {
+    document.getElementById('app').classList.add('sidebar-collapsed');
+  }
 }
 
 // ═══ TEMA ═════════════════════════════════════════════════════════════════════
@@ -956,6 +1037,7 @@ if (ON_LOGIN_PAGE) {
 
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
+  initSidebarState();
   document.addEventListener('click', handleRipple);
 
   const { data: { session: activeSession } } = await sb.auth.getSession();

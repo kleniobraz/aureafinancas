@@ -728,28 +728,146 @@ function renderAnalysis() {
     document.getElementById('tips-content').innerHTML=''; return;
   }
 
-  const pctComp=pct(te,ti), pctT=pct(ct['Transporte']||0,te), pctS=pct(ct['Saúde']||0,te), pctA=pct(ct['Alimentação']||0,te);
+  // ── Métricas base ──────────────────────────────────────────────────────────
+  const pctComp   = pct(te, ti);
+  const savingRate= ti>0 ? Math.round((sl/ti)*100) : 0;
+  const pctMor    = pct(ct['Moradia']||0, ti);      // moradia como % da renda
+  const pctAlim   = pct(ct['Alimentação']||0, te);
+  const pctTran   = pct(ct['Transporte']||0, te);
+  const pctPes    = pct(ct['Pessoal']||0, te);
+  const pctFin    = pct(ct['Financeiro']||0, te);
+
+  // ── Comparação com mês anterior ──────────────────────────────────────────
+  const prevMi  = currentMi>0 ? currentMi-1 : 11;
+  const prevY   = currentMi>0 ? currentYear : currentYear-1;
+  const hasPrev = hasData(prevY, prevMi);
+  const prevTe  = hasPrev ? totalExpense(prevY, prevMi) : 0;
+  const diffTe  = hasPrev ? te - prevTe : 0;
+  const diffPct = hasPrev&&prevTe>0 ? Math.round((diffTe/prevTe)*100) : 0;
+
+  // ── Meses à frente sem planejamento ──────────────────────────────────────
+  const mVazios = MONTH_NAMES.filter((_,mi)=>!hasData(currentYear,mi)&&mi>currentMi).length;
+
+  // ── KPIs da análise ───────────────────────────────────────────────────────
+  const budgetColor  = pctComp>90?'var(--red)':pctComp>75?'var(--amber)':'var(--accent)';
+  const budgetStatus = pctComp>90?'Crítico':pctComp>75?'Atenção':pctComp>50?'Moderado':'Saudável';
+  const savColor     = savingRate>=20?'var(--accent)':savingRate>=10?'var(--amber)':'var(--red)';
+  const savStatus    = savingRate>=20?'Excelente':savingRate>=10?'Razoável':'Baixa';
+
+  const kpis = [
+    ['Comprometido', pctComp+'%',   budgetColor, budgetStatus],
+    ['Economia',     savingRate+'%', savColor,    savStatus],
+    ...(ct['Alimentação'] ? [['Alimentação', pctAlim+'%', pctAlim>30?'var(--red)':pctAlim>20?'var(--amber)':'var(--accent)', pctAlim>30?'Alta':pctAlim>20?'Atenção':'OK']] : []),
+    ...(ct['Transporte']  ? [['Transporte',  pctTran+'%', pctTran>25?'var(--red)':pctTran>15?'var(--amber)':'var(--accent)', pctTran>25?'Alto':pctTran>15?'Moderado':'OK']] : []),
+  ];
+
   document.getElementById('analysis-content').innerHTML=`
     <div class="analysis-kpi-grid">
-      ${[[`% comprometida`,pctComp+'%',pctComp>80?'var(--red)':pctComp>60?'var(--amber)':'var(--accent)',pctComp>80?'Crítico':pctComp>60?'Atenção':'Saudável'],['Transporte',pctT+'%',pctT>25?'var(--red)':'var(--amber)',pctT>25?'Acima do ideal':'Moderado'],['Saúde',pctS+'%','var(--blue)','Prioridade'],['Alimentação',pctA+'%',pctA>20?'var(--amber)':'var(--accent)',pctA>20?'Atenção':'OK']]
-        .map(([label,val,color,status])=>`<div class="analysis-kpi" style="border-left:3px solid ${color}"><div class="label">${label}</div><div class="val" style="color:${color}">${val}</div><div class="status" style="color:${color};opacity:0.7">${status}</div></div>`).join('')}
+      ${kpis.map(([label,val,color,status])=>`
+        <div class="analysis-kpi" style="border-left:3px solid ${color}">
+          <div class="label">${label}</div>
+          <div class="val" style="color:${color}">${val}</div>
+          <div class="status" style="color:${color};opacity:0.7">${status}</div>
+        </div>`).join('')}
     </div>
-    <div style="font-size:13px;color:var(--text-2);line-height:1.8">
-      <p><span style="color:var(--text)">Saldo livre:</span> <span class="mono ${sl>=0?'text-green':'text-red'}">${fmt(sl)}</span> · ${pct(sl,ti)}% da renda. ${sl>500?'Boa margem para poupar.':sl>0?'Margem apertada.':'Despesas maiores que a renda!'}</p>
-      ${ct['Transporte']?`<p style="margin-top:8px"><span style="color:var(--text)">Transporte (${fmt(ct['Transporte'])}):</span> ${pctT}% das despesas. ${pctT>25?'Acima do recomendado.':'Dentro do esperado.'}</p>`:''}
-      ${ct['Saúde']?`<p style="margin-top:8px"><span style="color:var(--text)">Saúde (${fmt(ct['Saúde'])}):</span> Psicólogo e medicação são prioridade.</p>`:''}
+    <div style="font-size:13px;color:var(--text-2);line-height:1.9;margin-top:4px">
+      <p>
+        <span style="color:var(--text)">Saldo livre:</span>
+        <span class="mono ${sl>=0?'text-green':'text-red'}">${fmt(sl)}</span>
+        ${ti>0?' · '+savingRate+'% da renda.':''}
+        ${sl>0&&savingRate>=20?' Excelente — continue poupando!':sl>0&&savingRate>=10?' Há espaço para poupar mais.':sl>0?' Margem baixa — tente reduzir ao menos uma categoria.':sl===0?' Equilibrado, mas sem margem de segurança.':' Despesas acima da renda — atenção urgente.'}
+      </p>
+      ${hasPrev&&prevTe>0?`<p style="margin-top:8px">
+        <span style="color:var(--text)">Vs. ${MONTH_NAMES[prevMi]}:</span>
+        despesas ${diffTe>0?`aumentaram ${fmt(Math.abs(diffTe))} (+${diffPct}%)`:diffTe<0?`diminuíram ${fmt(Math.abs(diffTe))} (${diffPct}%)`:'ficaram iguais'}.
+      </p>`:''}
+      ${ct['Moradia']?`<p style="margin-top:8px">
+        <span style="color:var(--text)">Moradia (${fmt(ct['Moradia'])}):</span>
+        ${pctMor}% da renda. ${pctMor>40?'Acima do recomendado — o ideal é até 30% da renda.':pctMor>30?'Levemente acima do ideal (30%).':'Dentro do esperado.'}
+      </p>`:''}
+      ${ct['Financeiro']?`<p style="margin-top:8px">
+        <span style="color:var(--text)">Dívidas e juros (${fmt(ct['Financeiro'])}):</span>
+        ${pctFin}% das despesas. ${pctFin>15?'Nível preocupante — priorize quitar as dívidas mais caras.':'Controlado.'}
+      </p>`:''}
     </div>`;
 
-  const mVazios=MONTH_NAMES.filter((_,mi)=>!hasData(currentYear,mi)&&mi>currentMi).length;
-  const tips=[
-    pctComp>80&&{type:'danger', icon:'🚨',title:'Orçamento crítico',      text:`${pctComp}% da renda comprometida. Identifique 1–2 cortes imediatos.`},
-    sl>0      &&{type:'success',icon:'💚',title:'Guarde agora!',           text:`Você tem ${fmt(sl)} sobrando. Transfira pelo menos ${fmt(sl*0.5)} para uma conta separada.`},
-    pctT>25   &&{type:'warning',icon:'🚗',title:'Transporte alto',         text:`${pctT}% das despesas em transporte. Revise corridas e combustível — pequenos cortes podem liberar ${fmt((ct['Transporte']||0)*0.2)}/mês.`},
-    mVazios>0 &&{type:'info',  icon:'📅',title:`${mVazios} mês(es) sem planejamento`,text:'Use "Copiar mês anterior" para preencher rapidamente os próximos meses.'},
-    sl<1000   &&{type:'info',  icon:'🏦',title:'Reserva de emergência',   text:`Com ${fmt(te)} de despesas, o ideal é ter entre ${fmt(te*3)} e ${fmt(te*6)} guardados.`},
+  // ── Dicas personalizadas ──────────────────────────────────────────────────
+  const tips = [
+    // Saldo negativo — prioridade máxima
+    sl < 0 &&
+      { type:'danger', icon:'🚨', title:'Despesas acima da renda',
+        text:`Você gastou ${fmt(Math.abs(sl))} a mais do que recebeu em ${MONTH_NAMES[currentMi]}. Identifique ao menos uma despesa para cortar ou renegociar imediatamente.` },
+
+    // Orçamento crítico mas saldo positivo
+    pctComp>90 && sl>=0 &&
+      { type:'danger', icon:'⚠️', title:'Orçamento crítico',
+        text:`${pctComp}% da renda está comprometida — sobram apenas ${fmt(sl)}. Qualquer imprevisto pode gerar dívida. Tente reduzir pelo menos uma categoria.` },
+
+    // Ótima economia
+    sl>0 && savingRate>=20 &&
+      { type:'success', icon:'🏆', title:'Taxa de economia excelente',
+        text:`Você está economizando ${savingRate}% da renda (${fmt(sl)}). Para esse dinheiro trabalhar, considere CDB, Tesouro Direto ou fundo de renda fixa.` },
+
+    // Economia possível mas baixa
+    sl>0 && savingRate>0 && savingRate<20 &&
+      { type:'success', icon:'💰', title:'Guarde agora',
+        text:`Você tem ${fmt(sl)} de sobra em ${MONTH_NAMES[currentMi]}. Transfira ao menos ${fmt(sl*0.5)} para uma conta separada — a meta ideal é poupar 20% da renda.` },
+
+    // Reserva de emergência
+    te>0 && sl<(te*3) &&
+      { type:'info', icon:'🏦', title:'Construa sua reserva de emergência',
+        text:`Com ${fmt(te)} de despesas mensais, a reserva ideal é de ${fmt(te*3)} a ${fmt(te*6)} (3 a 6 meses). Comece separando um valor fixo todo mês, mesmo que pequeno.` },
+
+    // Moradia cara
+    ct['Moradia'] && pctMor > 40 &&
+      { type:'warning', icon:'🏠', title:'Moradia acima do ideal',
+        text:`Moradia consome ${pctMor}% da renda (${fmt(ct['Moradia'])}). O recomendado é até 30%. Avalie renegociar aluguel, dividir despesas fixas ou reduzir contas de serviços.` },
+
+    // Alimentação cara
+    ct['Alimentação'] && pctAlim > 30 &&
+      { type:'warning', icon:'🍽️', title:'Alimentação elevada',
+        text:`Alimentação representa ${pctAlim}% das despesas (${fmt(ct['Alimentação'])}). Planejar as refeições da semana e cozinhar em casa pode reduzir esse gasto em até 30%.` },
+
+    // Transporte alto
+    ct['Transporte'] && pctTran > 25 &&
+      { type:'warning', icon:'🚗', title:'Transporte alto',
+        text:`Transporte representa ${pctTran}% das despesas (${fmt(ct['Transporte'])}). Revise corridas por aplicativo, combustível e estacionamentos — pequenos ajustes fazem diferença.` },
+
+    // Gastos pessoais altos
+    ct['Pessoal'] && pctPes > 20 &&
+      { type:'warning', icon:'👤', title:'Gastos pessoais elevados',
+        text:`Gastos pessoais correspondem a ${pctPes}% das despesas (${fmt(ct['Pessoal'])}). Revise assinaturas, lazer e compras não essenciais para liberar margem.` },
+
+    // Dívidas altas
+    ct['Financeiro'] && pctFin > 15 &&
+      { type:'danger', icon:'💳', title:'Atenção com dívidas',
+        text:`Juros e parcelas representam ${pctFin}% das despesas (${fmt(ct['Financeiro'])}). Priorize quitar as dívidas com maior taxa de juros primeiro — isso libera renda no médio prazo.` },
+
+    // Investindo em educação — reforço positivo
+    ct['Educação'] &&
+      { type:'success', icon:'📚', title:'Investindo em educação',
+        text:`Você destinou ${fmt(ct['Educação'])} para educação este mês. Esse é um dos investimentos com melhor retorno a longo prazo — continue!` },
+
+    // Tendência de aumento de despesas
+    hasPrev && diffTe>0 && diffPct>=15 &&
+      { type:'warning', icon:'📈', title:'Despesas crescendo',
+        text:`Suas despesas aumentaram ${diffPct}% em relação a ${MONTH_NAMES[prevMi]} (${fmt(diffTe)} a mais). Identifique o que mudou e avalie se é necessário ou passageiro.` },
+
+    // Tendência de queda — reforço positivo
+    hasPrev && diffTe<0 && Math.abs(diffPct)>=10 &&
+      { type:'success', icon:'📉', title:'Despesas em queda',
+        text:`Ótimo! Você reduziu ${fmt(Math.abs(diffTe))} em despesas comparado a ${MONTH_NAMES[prevMi]} (−${Math.abs(diffPct)}%). Esse controle faz grande diferença no acumulado do ano.` },
+
+    // Meses sem planejamento
+    mVazios>0 &&
+      { type:'info', icon:'📅', title:`${mVazios} ${mVazios===1?'mês':'meses'} sem planejamento`,
+        text:`Você ainda não planejou ${mVazios} ${mVazios===1?'mês':'meses'} restante${mVazios===1?'':'s'} do ano. Use "Copiar mês anterior" para preencher rapidamente e ter uma visão completa.` },
   ].filter(Boolean);
 
-  document.getElementById('tips-content').innerHTML=tips.map(t=>`<div class="tip-card ${t.type}"><div class="tip-icon">${t.icon}</div><div class="tip-title">${t.title}</div><div class="tip-text">${t.text}</div></div>`).join('');
+  document.getElementById('tips-content').innerHTML = tips.length
+    ? tips.map(t=>`<div class="tip-card ${t.type}"><div class="tip-icon">${t.icon}</div><div class="tip-title">${t.title}</div><div class="tip-text">${t.text}</div></div>`).join('')
+    : '<div class="empty-state"><strong>Tudo sob controle!</strong>Nenhuma recomendação crítica para este mês. Continue assim.</div>';
+
   animStagger('.analysis-kpi',{stagger:0.08});
   animStagger('.tip-card',{y:16,stagger:0.1,delay:0.2});
 }

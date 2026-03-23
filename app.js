@@ -86,8 +86,8 @@ function handleRipple(e) {
 
 // ═══ DATA MODEL ═══════════════════════════════════════════════════════════════
 let allData     = {};
-let currentYear = 2026;
-let currentMi   = 3; // 0=Jan … 11=Dec
+let currentYear = new Date().getFullYear();
+let currentMi   = new Date().getMonth(); // 0=Jan … 11=Dec
 let donutChart, barChart, saldoChart;
 
 function mKey(year, mi)  { return `${year}-${String(mi + 1).padStart(2, '0')}`; }
@@ -106,8 +106,9 @@ function catTotals(y = currentYear, mi = currentMi) {
   return map;
 }
 
-function seedApril() {
-  allData['2026-04'] = {
+function seedCurrentMonth() {
+  const key = curKey();
+  allData[key] = {
     isReal: false,
     incomes: [
       { label: 'Salário principal', value: 0, note: '' },
@@ -320,7 +321,7 @@ async function onAuthSuccess() {
     }
   }
 
-  if (Object.keys(allData).length === 0) seedApril();
+  if (Object.keys(allData).length === 0) seedCurrentMonth();
 
   renderAll();
 }
@@ -793,8 +794,7 @@ function closeSidebar() {
 function initTheme() {
   const isLight = localStorage.getItem('theme')==='light';
   if (isLight) document.body.classList.add('light');
-  _updateThemeBtn(isLight);
-  _swapLogo(isLight);
+  _updateThemeBtn(isLight); // _updateThemeBtn already calls _swapLogo
 }
 function toggleTheme() {
   document.body.classList.add('theme-switching');

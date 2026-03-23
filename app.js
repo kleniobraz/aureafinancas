@@ -744,8 +744,7 @@ function renderAnalysis() {
   const tips=[
     pctComp>80&&{type:'danger', icon:'🚨',title:'Orçamento crítico',      text:`${pctComp}% da renda comprometida. Identifique 1–2 cortes imediatos.`},
     sl>0      &&{type:'success',icon:'💚',title:'Guarde agora!',           text:`Você tem ${fmt(sl)} sobrando. Transfira pelo menos ${fmt(sl*0.5)} para uma conta separada.`},
-    pctT>25   &&{type:'warning',icon:'🚗',title:'Transporte alto',         text:`${pctT}% das despesas em transporte. Limitar o Uber economizaria cerca de ${fmt(77.85)}/mês.`},
-               {type:'warning',icon:'💳',title:'Cartões de terceiros',    text:'Gastos nos cartões da Tia Ninha e Lillian dificultam o controle real.'},
+    pctT>25   &&{type:'warning',icon:'🚗',title:'Transporte alto',         text:`${pctT}% das despesas em transporte. Revise corridas e combustível — pequenos cortes podem liberar ${fmt((ct['Transporte']||0)*0.2)}/mês.`},
     mVazios>0 &&{type:'info',  icon:'📅',title:`${mVazios} mês(es) sem planejamento`,text:'Use "Copiar mês anterior" para preencher rapidamente os próximos meses.'},
     sl<1000   &&{type:'info',  icon:'🏦',title:'Reserva de emergência',   text:`Com ${fmt(te)} de despesas, o ideal é ter entre ${fmt(te*3)} e ${fmt(te*6)} guardados.`},
   ].filter(Boolean);

@@ -148,6 +148,14 @@ function showLoginError(msg) {
   if (HAS_GSAP()) gsap.fromTo(el, { opacity: 0, x: -8 }, { opacity: 1, x: 0, duration: 0.25 });
 }
 
+async function doLoginGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/dashboard.html' },
+  });
+  if (error) showLoginError('Erro ao conectar com o Google. Tente novamente.');
+}
+
 async function doLogin() {
   const email    = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;

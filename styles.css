@@ -473,7 +473,7 @@ body {
   letter-spacing: 0.08em;
 }
 
-/* ── TABLES ──────────────────────────────────────────────────────────────── */
+/* ── TABLES ───────────────────────────────���──────────────────────────────── */
 .table-wrap { overflow-x: auto; border-radius: var(--r-md); }
 
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -1330,6 +1330,16 @@ body.light .sidebar-toggle-icon { background: var(--text-2); }
   letter-spacing: 0.04em;
 }
 .login-link:hover { color: var(--accent-l); }
+
+.btn-google {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 500;
+  transition: background 0.18s, border-color 0.18s;
+}
+.btn-google:hover { background: var(--bg-4); border-color: var(--text-3); }
 
 .login-consent {
   display: flex;

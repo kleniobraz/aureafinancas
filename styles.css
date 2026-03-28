@@ -2551,3 +2551,136 @@ body.theme-switching .app {
   transition: background 0.35s ease, background-color 0.35s ease,
               color 0.28s ease, border-color 0.28s ease;
 }
+
+/* ═══ MOBILE UX — MELHORIAS GERAIS ══════════════════════════════════════════
+   Todas as regras abaixo afetam apenas mobile (≤768px e ≤480px).
+   O layout desktop não é alterado.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Remove delay de 300ms no toque em todos os botões e elementos clicáveis */
+@media (max-width: 768px) {
+  button, a, [onclick], .nav-item, .month-item, .bnav-item,
+  .entry-del, .year-nav-btn, .btn-logout, .sidebar-toggle {
+    touch-action: manipulation;
+  }
+
+  /* ── Touch targets mínimos 44px ───────────────────────────────────────── */
+  .nav-item {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-radius: var(--r-md);
+  }
+  .month-item  { min-height: 40px; display: flex; align-items: center; }
+  .year-nav-btn { width: 40px; height: 40px; }
+  .btn-logout  { width: 44px; height: 44px; }
+
+  /* ── Inputs dos lançamentos — legíveis e tocáveis ─────────────────────── */
+  .entry-body  { padding: 13px 14px; gap: 10px; }
+  .ei          { font-size: 15px; }
+  .ei-label    { font-size: 15px; }
+  .ei-note,
+  .ei-method   { font-size: 13px; }
+  .ei-num      { font-size: 14px; width: 84px; }
+  .ei-val-wrap { padding: 7px 10px; }
+  .ei-sel      { font-size: 13px; padding: 4px 6px; min-height: 36px; }
+
+  /* Botão deletar — área de toque maior */
+  .entry-del {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── KPI cards — valores mais legíveis ────────────────────────────────── */
+  .kpi-value   { font-size: 22px; }
+  .kpi-label   { font-size: 11px; }
+  .kpi-sub     { font-size: 12px; }
+
+  /* ── Gráficos — altura consistente ───────────────────────────────────── */
+  .chart-card canvas { max-height: 200px; }
+
+  /* ── Bottom nav — área de toque generosa ─────────────────────────────── */
+  .bottom-nav  { height: 64px; }
+  .bnav-item   { min-height: 64px; }
+  .bnav-icon   { font-size: 18px; }
+  .bnav-label  { font-size: 10px; font-weight: 500; }
+
+  /* ── Profile modal — não transborda em telas estreitas ───────────────── */
+  .profile-modal {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: 100%;
+    bottom: 72px;
+  }
+
+  /* ── Sidebar drawer — fechar ao clicar em nav item ───────────────────── */
+  .sidebar { -webkit-overflow-scrolling: touch; }
+
+  /* ── Tabela anual — scroll horizontal suave ──────────────────────────── */
+  .annual-wrap {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  /* ── Botões de ação — tamanho mínimo confortável ─────────────────────── */
+  .btn { min-height: 40px; }
+  .edit-add-btn { min-height: 36px; padding: 6px 12px; }
+
+  /* ── Login — campos Nome+Sobrenome empilhados em telas estreitas ─────── */
+  .login-field-row { flex-direction: column; gap: 14px; }
+
+  /* ── Topbar — mostra saudação no mobile ──────────────────────────────── */
+  .topbar-greeting {
+    display: block;
+    font-size: 12px;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Evita overflow horizontal ───────────────────────────────────────── */
+  .main, .panel { overflow-x: hidden; }
+  .section { overflow-x: hidden; }
+}
+
+/* ── Celulares pequenos (≤480px) ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* App grid ainda mais compacto */
+  .main { padding: 12px 10px 80px; }
+  .section { padding: 14px 12px; margin-bottom: 8px; }
+  .chart-card { padding: 14px 12px; }
+
+  /* KPIs — 2 colunas compactas */
+  .kpi-grid { gap: 8px; margin-bottom: 12px; }
+  .kpi { padding: 14px 12px 12px; }
+  .kpi-value { font-size: 19px; }
+
+  /* Charts — um pouco menores */
+  .charts-row { gap: 8px; margin-bottom: 10px; }
+  .chart-card canvas { max-height: 180px; }
+
+  /* Tabela anual — fonte menor mas legível */
+  .annual-wrap { font-size: 11px; }
+
+  /* Inputs compactos mas ainda tocáveis */
+  .entry-body { padding: 11px 12px; }
+  .ei { font-size: 14px; }
+
+  /* Edit header — empilha completamente */
+  .edit-header { flex-direction: column; align-items: stretch; }
+  .edit-header-actions { flex-direction: row; }
+  .edit-header-actions .btn { flex: 1; font-size: 12px; }
+
+  /* Bottom nav label oculto em telas muito pequenas */
+  .bnav-label { font-size: 9px; letter-spacing: 0; }
+
+  /* Login card — padding menor */
+  .login-card { padding: 28px 18px 24px; }
+  .login-welcome { font-size: 22px; }
+}

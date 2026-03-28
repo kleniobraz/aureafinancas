@@ -5,15 +5,141 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const MONTH_NAMES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const LS_CACHE    = 'financeiro_v4'; // localStorage cache key (fallback offline)
 
-const CATS = {
-  'Moradia':     { color: '#4D8EFF', bg: 'rgba(77,142,255,0.12)',  text: '#4D8EFF' },
-  'Alimentação': { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)',  text: '#F59E0B' },
-  'Transporte':  { color: '#A78BFA', bg: 'rgba(167,139,250,0.12)', text: '#A78BFA' },
-  'Saúde':       { color: '#F0506E', bg: 'rgba(240,80,110,0.12)',  text: '#F0506E' },
-  'Educação':    { color: '#34D399', bg: 'rgba(52,211,153,0.12)',  text: '#34D399' },
-  'Pessoal':     { color: '#F472B6', bg: 'rgba(244,114,182,0.12)', text: '#F472B6' },
-  'Financeiro':  { color: '#94A3B8', bg: 'rgba(148,163,184,0.12)', text: '#94A3B8' },
+// ── CATEGORIAS (dinâmicas, salvas em localStorage) ────────────────────────
+const DEFAULT_CATS = {
+  'Moradia':     '#4D8EFF',
+  'Alimentação': '#F59E0B',
+  'Transporte':  '#A78BFA',
+  'Saúde':       '#F0506E',
+  'Educação':    '#34D399',
+  'Pessoal':     '#F472B6',
+  'Financeiro':  '#94A3B8',
 };
+
+function _buildCat(color) {
+  const h = color.replace('#','');
+  const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  return { color, bg:`rgba(${r},${g},${b},0.12)`, text:color };
+}
+
+let CATS = {};
+
+function loadCats() {
+  CATS = {};
+  try {
+    const stored = JSON.parse(localStorage.getItem('aurea_cats') || 'null');
+    if (stored && typeof stored === 'object' && Object.keys(stored).length > 0) {
+      Object.entries(stored).forEach(([name, color]) => { CATS[name] = _buildCat(color); });
+      return;
+    }
+  } catch(e) {}
+  Object.entries(DEFAULT_CATS).forEach(([name, color]) => { CATS[name] = _buildCat(color); });
+}
+
+function saveCats() {
+  const data = {};
+  Object.entries(CATS).forEach(([name, cat]) => { data[name] = cat.color; });
+  localStorage.setItem('aurea_cats', JSON.stringify(data));
+}
+
+function addCat(name, color) {
+  if (!name || CATS[name]) return false;
+  CATS[name] = _buildCat(color);
+  saveCats();
+  return true;
+}
+
+function removeCat(name) {
+  const inUse = Object.values(allData).some(m => (m.expenses||[]).some(e => e.cat === name));
+  if (inUse) return false;
+  delete CATS[name];
+  saveCats();
+  return true;
+}
+
+// ── Category manager UI ────────────────────────────────────────────────────
+const CAT_PALETTE = [
+  '#4D8EFF','#F59E0B','#A78BFA','#F0506E','#34D399','#F472B6','#94A3B8',
+  '#FB923C','#38BDF8','#A3E635','#E879F9','#FBBF24','#F87171','#4ADE80','#C084FC',
+];
+let _catNewColor = CAT_PALETTE[0];
+
+function toggleCatManager() {
+  const el = document.getElementById('cat-manager');
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : '';
+  if (!isOpen) renderCatManager();
+  const btn = document.getElementById('cat-manager-btn');
+  if (btn) btn.classList.toggle('active', !isOpen);
+}
+
+function renderCatManager() {
+  const mgr = document.getElementById('cat-manager');
+  if (!mgr || mgr.style.display === 'none') return;
+
+  const usedCats = new Set(
+    Object.values(allData).flatMap(m => (m.expenses||[]).map(e => e.cat))
+  );
+
+  const pillsHtml = Object.entries(CATS).map(([name, cat]) => {
+    const used = usedCats.has(name);
+    return `<div class="cat-pill">
+      <span class="cat-pill-dot" style="background:${cat.color}"></span>
+      <span class="cat-pill-name">${escHtml(name)}</span>
+      ${!used ? `<button class="cat-pill-del" onclick="doRemoveCat('${escHtml(name).replace(/'/g,"\\'")}')" title="Remover">
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><line x1="1" y1="1" x2="7" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="7" y1="1" x2="1" y2="7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </button>` : ''}
+    </div>`;
+  }).join('');
+
+  const paletteHtml = CAT_PALETTE.map(c =>
+    `<button class="cat-swatch${c===_catNewColor?' sel':''}" style="background:${c}" onclick="selectCatColor('${c}')" title="${c}"></button>`
+  ).join('');
+
+  mgr.innerHTML = `
+    <div class="cat-pills">${pillsHtml}</div>
+    <div class="cat-add-row">
+      <input class="ei ei-catname" id="cat-new-name" placeholder="Nome da categoria..." maxlength="24"
+        onkeydown="if(event.key==='Enter')submitNewCat()">
+      <div class="cat-palette">${paletteHtml}</div>
+      <button class="edit-add-btn" onclick="submitNewCat()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><line x1="6" y1="1" x2="6" y2="11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="1" y1="6" x2="11" y2="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Criar
+      </button>
+    </div>`;
+}
+
+function selectCatColor(color) {
+  _catNewColor = color;
+  document.querySelectorAll('.cat-swatch').forEach(s => {
+    s.classList.toggle('sel', s.style.backgroundColor === color || s.style.background === color ||
+      s.getAttribute('style') === `background: ${color}` || s.getAttribute('style') === `background:${color}`);
+  });
+  // Easier: just re-render
+  renderCatManager();
+  setTimeout(() => document.getElementById('cat-new-name')?.focus(), 0);
+}
+
+function doRemoveCat(name) {
+  if (!removeCat(name)) {
+    showAlert(`"${name}" está em uso e não pode ser removida.`, 'danger'); return;
+  }
+  renderCatManager();
+  renderExpenseRows();
+}
+
+function submitNewCat() {
+  const input = document.getElementById('cat-new-name');
+  const name = input?.value.trim();
+  if (!name) { showAlert('Digite um nome para a categoria.', 'danger'); return; }
+  if (CATS[name]) { showAlert(`Categoria "${name}" já existe.`, 'danger'); return; }
+  addCat(name, _catNewColor);
+  input.value = '';
+  renderCatManager();
+  renderExpenseRows();
+  showAlert(`Categoria "${name}" adicionada!`, 'success');
+}
 
 function getC() {
   const light = document.body.classList.contains('light');
@@ -89,6 +215,7 @@ let allData     = {};
 let currentYear = new Date().getFullYear();
 let currentMi   = new Date().getMonth(); // 0=Jan … 11=Dec
 let donutChart, barChart, saldoChart;
+let _expenseView = 'list'; // 'list' | 'category'
 
 function mKey(year, mi)  { return `${year}-${String(mi + 1).padStart(2, '0')}`; }
 function curKey()        { return mKey(currentYear, currentMi); }
@@ -672,43 +799,214 @@ function renderEditTab() {
   const hasPrev = currentMi > 0 ? hasData(currentYear, currentMi-1) : hasData(currentYear-1, 11);
   document.getElementById('copy-prev-btn').style.display = hasPrev ? '' : 'none';
 
-  renderIncomeRows(); renderExpenseRows();
-  animStagger('#panel-dados .section', { stagger: 0.1 });
+  renderIncomeRows(); renderExpenseRows(); renderCatManager();
 }
 
 function renderIncomeRows() {
   const m = curData();
-  document.getElementById('income-rows').innerHTML = m.incomes.length
-    ? m.incomes.map((inc,i)=>`<tr>
-        <td><input type="text" class="il-text" value="${escHtml(inc.label)}" placeholder="Fonte" onchange="curData().incomes[${i}].label=this.value"></td>
-        <td><input type="number" class="il-num" value="${escHtml(inc.value)}" step="0.01" onchange="curData().incomes[${i}].value=+this.value;updateTotals()"></td>
-        <td><input type="text" class="il-text" value="${escHtml(inc.note)}" placeholder="Observação" onchange="curData().incomes[${i}].note=this.value"></td>
-        <td><button class="btn-icon" onclick="removeIncome(${i})" title="Remover">✕</button></td>
-      </tr>`).join('')
-    : `<tr><td colspan="4"><div class="empty-state" style="padding:20px">Nenhuma entrada — clique em "+ Adicionar" abaixo.</div></td></tr>`;
+  const el = document.getElementById('income-rows');
+  if (!m.incomes.length) {
+    el.innerHTML = `<div class="entry-empty"><span>Nenhuma entrada ainda.</span><span>Clique em "Adicionar" para começar.</span></div>`;
+    updateTotals(); return;
+  }
+  el.innerHTML = m.incomes.map((inc, i) => `
+    <div class="entry-card">
+      <div class="entry-accent" style="background:var(--green)"></div>
+      <div class="entry-body">
+        <div class="entry-main">
+          <input type="text" class="ei ei-label" value="${escHtml(inc.label)}" placeholder="Fonte de renda"
+            onchange="curData().incomes[${i}].label=this.value">
+          <div class="ei-val-wrap">
+            <span class="ei-currency">R$</span>
+            <input type="number" class="ei ei-num" value="${escHtml(inc.value||'')}" step="0.01" min="0" placeholder="0,00"
+              onchange="curData().incomes[${i}].value=+this.value;updateTotals()">
+          </div>
+          <button class="entry-del" onclick="removeIncome(${i})" title="Remover">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="entry-sub">
+          <input type="text" class="ei ei-note" value="${escHtml(inc.note||'')}" placeholder="Observação (opcional)"
+            onchange="curData().incomes[${i}].note=this.value">
+        </div>
+      </div>
+    </div>`).join('');
   updateTotals();
+}
+
+function _expenseCardHtml(ex, i) {
+  const catColor = CATS[ex.cat]?.color || '#94A3B8';
+  return `
+  <div class="entry-card" style="--ec:${catColor}">
+    <div class="entry-accent" style="background:${catColor}"></div>
+    <div class="entry-body">
+      <div class="entry-main">
+        <span class="entry-label-text">${escHtml(ex.label) || '<span style="color:var(--text-3)">Sem descrição</span>'}</span>
+        <div class="entry-badges">
+          <span class="entry-cat-badge" style="color:${catColor};border-color:${catColor}22">${escHtml(ex.cat||'—')}</span>
+          ${ex.method ? `<span class="entry-method-badge">${escHtml(ex.method)}</span>` : ''}
+        </div>
+        <div class="ei-val-wrap ei-val-static">
+          <span class="ei-currency">R$</span>
+          <span class="ei-num-static">${(+ex.value||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        </div>
+        <div class="entry-actions">
+          <button class="entry-edit-btn" onclick="openExpenseDrawer(${i})" title="Editar">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8.5 1.5L10.5 3.5L4 10H2V8L8.5 1.5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="entry-del" onclick="removeExpense(${i})" title="Remover">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Drawer de edição de despesa ────────────────────────────────────────────
+function openExpenseDrawer(i) {
+  const ex = curData().expenses[i];
+  if (!ex) return;
+
+  let draft = { ...ex };
+
+  const catOpts = Object.entries(CATS).map(([name, cat]) =>
+    `<button class="drawer-cat-opt${draft.cat===name?' sel':''}" style="--dc:${cat.color}"
+      onclick="(function(){document.querySelectorAll('.drawer-cat-opt').forEach(b=>b.classList.remove('sel'));this.classList.add('sel');_drawerDraft.cat='${escHtml(name).replace(/'/g,"\\'")}';document.getElementById('drawer-cat-preview').style.background='${cat.color}';}).call(this)">
+      <span class="drawer-cat-dot" style="background:${cat.color}"></span>${escHtml(name)}
+    </button>`
+  ).join('');
+
+  const selCatColor = CATS[draft.cat]?.color || '#94A3B8';
+
+  document.getElementById('expense-drawer').innerHTML = `
+    <div class="drawer-backdrop" onclick="closeExpenseDrawer()"></div>
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <div class="drawer-header-dot" id="drawer-cat-preview" style="background:${selCatColor}"></div>
+        <span class="drawer-title">Editar despesa</span>
+        <button class="drawer-close" onclick="closeExpenseDrawer()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="1" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="13" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="drawer-body">
+        <div class="drawer-field">
+          <label class="drawer-label">Descrição</label>
+          <input class="drawer-input" id="d-label" type="text" value="${escHtml(draft.label)}" placeholder="Ex: Uber, Supermercado...">
+        </div>
+        <div class="drawer-field">
+          <label class="drawer-label">Valor</label>
+          <div class="drawer-val-wrap">
+            <span class="drawer-currency">R$</span>
+            <input class="drawer-input drawer-input-num" id="d-value" type="number" step="0.01" min="0" value="${draft.value||''}">
+          </div>
+        </div>
+        <div class="drawer-field">
+          <label class="drawer-label">Método de pagamento</label>
+          <input class="drawer-input" id="d-method" type="text" value="${escHtml(draft.method||'')}" placeholder="PIX, cartão de crédito, débito...">
+        </div>
+        <div class="drawer-field">
+          <label class="drawer-label">Categoria</label>
+          <div class="drawer-cat-grid">${catOpts}</div>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <button class="btn btn-ghost" onclick="closeExpenseDrawer()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveExpenseDrawer(${i})">Salvar alterações</button>
+      </div>
+    </div>`;
+
+  window._drawerDraft = draft;
+  const el = document.getElementById('expense-drawer');
+  el.style.display = 'block';
+  requestAnimationFrame(() => el.classList.add('open'));
+  setTimeout(() => document.getElementById('d-label')?.focus(), 80);
+}
+
+function closeExpenseDrawer() {
+  const el = document.getElementById('expense-drawer');
+  el.classList.remove('open');
+  setTimeout(() => { el.style.display = 'none'; el.innerHTML = ''; }, 260);
+}
+
+function saveExpenseDrawer(i) {
+  const ex = curData().expenses[i];
+  if (!ex) { closeExpenseDrawer(); return; }
+  ex.label  = document.getElementById('d-label')?.value.trim() || ex.label;
+  ex.value  = +(document.getElementById('d-value')?.value || 0);
+  ex.method = document.getElementById('d-method')?.value.trim() || '';
+  ex.cat    = window._drawerDraft?.cat || ex.cat;
+  closeExpenseDrawer();
+  renderExpenseRows();
+  updateTotals();
+  showAlert('Despesa atualizada.', 'success');
 }
 
 function renderExpenseRows() {
+  if (_expenseView === 'category') { _renderExpensesByCategory(); return; }
+
   const m = curData();
-  document.getElementById('expense-rows').innerHTML = m.expenses.length
-    ? m.expenses.map((ex,i)=>{
-        const opts = Object.keys(CATS).map(k=>`<option value="${k}"${k===ex.cat?' selected':''}>${k}</option>`).join('');
-        return `<tr>
-          <td><input type="text" class="il-text" value="${escHtml(ex.label)}" placeholder="Descrição" onchange="curData().expenses[${i}].label=this.value"></td>
-          <td><select class="il-sel" onchange="curData().expenses[${i}].cat=this.value">${opts}</select></td>
-          <td><input type="number" class="il-num" value="${escHtml(ex.value)}" step="0.01" onchange="curData().expenses[${i}].value=+this.value;updateTotals()"></td>
-          <td><input type="text" class="il-text" value="${escHtml(ex.method)}" placeholder="PIX, cartão..." onchange="curData().expenses[${i}].method=this.value"></td>
-          <td><button class="btn-icon" onclick="removeExpense(${i})" title="Remover">✕</button></td>
-        </tr>`;
-      }).join('')
-    : `<tr><td colspan="5"><div class="empty-state" style="padding:20px">Nenhuma despesa — clique em "+ Adicionar" abaixo.</div></td></tr>`;
+  const el = document.getElementById('expense-rows');
+  if (!m.expenses.length) {
+    el.innerHTML = `<div class="entry-empty"><span>Nenhuma despesa ainda.</span><span>Clique em "Adicionar" para começar.</span></div>`;
+    updateTotals(); return;
+  }
+  el.innerHTML = m.expenses.map((ex, i) => _expenseCardHtml(ex, i)).join('');
   updateTotals();
 }
 
+function _renderExpensesByCategory() {
+  const m = curData();
+  const el = document.getElementById('expense-rows');
+  if (!m.expenses.length) {
+    el.innerHTML = `<div class="entry-empty"><span>Nenhuma despesa ainda.</span><span>Clique em "Adicionar" para começar.</span></div>`;
+    updateTotals(); return;
+  }
+
+  // Agrupar por categoria preservando índice original
+  const groups = {};
+  m.expenses.forEach((ex, i) => {
+    const cat = ex.cat || 'Sem categoria';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push({ ex, i });
+  });
+
+  el.innerHTML = Object.entries(groups).map(([cat, items]) => {
+    const catDef = CATS[cat] || _buildCat('#94A3B8');
+    const total  = items.reduce((s, {ex}) => s + (+ex.value||0), 0);
+    const count  = items.length;
+    return `
+    <div class="cat-group">
+      <div class="cat-group-hdr">
+        <span class="cat-group-dot" style="background:${catDef.color}"></span>
+        <span class="cat-group-name">${escHtml(cat)}</span>
+        <span class="cat-group-count">${count} ${count===1?'item':'itens'}</span>
+        <span class="cat-group-total">${fmt(total)}</span>
+      </div>
+      <div class="cat-group-body">
+        ${items.map(({ex, i}) => _expenseCardHtml(ex, i)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  updateTotals();
+}
+
+function setExpenseView(view) {
+  _expenseView = view;
+  document.getElementById('evt-list')?.classList.toggle('active', view === 'list');
+  document.getElementById('evt-cat')?.classList.toggle('active', view === 'category');
+  renderExpenseRows();
+}
+
 function updateTotals() {
-  document.getElementById('income-total').textContent  = fmt(totalIncome());
-  document.getElementById('expense-total').textContent = fmt(totalExpense());
+  const inc = totalIncome(), exp = totalExpense(), sl = inc - exp;
+  document.getElementById('income-total').textContent  = fmt(inc);
+  document.getElementById('expense-total').textContent = fmt(exp);
+  const saldoEl = document.getElementById('edit-saldo');
+  if (saldoEl) {
+    saldoEl.textContent = fmt(sl);
+    saldoEl.className = 'edit-sum-val ' + (sl >= 0 ? 'text-green' : 'text-red');
+  }
 }
 
 function addIncome()      { const m=getData(currentYear,currentMi); m.incomes.push({label:'Nova entrada',value:0,note:''}); m.isReal=true; renderIncomeRows(); renderSidebar(); }
@@ -1044,6 +1342,7 @@ if (ON_LOGIN_PAGE) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  loadCats();
   initTheme();
   initSidebarState();
   document.addEventListener('click', handleRipple);
